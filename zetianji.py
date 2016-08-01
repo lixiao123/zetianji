@@ -68,9 +68,52 @@ def test3():
     html_path = os.path.join(home_path, "tmp")
     s = BeautifulSoup(open(html_path + "/office.html"), "lxml")
 
+
+def check_update():
+    update = {}
+
+    server = "http://www.biquge.com/0_168/"
+
+    content = urllib2.urlopen(server)
+    html = content.read()
+    s = BeautifulSoup(html, "lxml")
+
+    update_info = ('update_time', 'latest_chapter_name', 'latest_chapter_url')
+    head_tag = s.head
+    for i in update_info:
+        novel_property = re.compile("og:novel:%s" % i)
+        property_tag = head_tag.find(property=novel_property)
+        if property_tag is not None:
+            update[i] = property_tag.get('content')
+
+    return update
+
+
+def write_new(new):
+    f = open(update_file, "w")
+    f.write(new)
+    f.close()
+    print "updated"
+    # do notification
+
 if __name__ == "__main__":
 
-    test1()
+    check = check_update()
+    new = check.get("latest_chapter_url")
+
+    update_file = os.path.join("/tmp", "check_update")
+    if not os.path.exists(update_file):
+        write_new(new)
+    else:
+        f = open(update_file, "r")
+        old = f.readline()
+        if old == new:
+            print "not update"
+        else:
+            write_new(new)
+
+        f.close()
+
 
 
 
